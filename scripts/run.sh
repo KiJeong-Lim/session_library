@@ -95,7 +95,7 @@ else
     for name in "${arr[@]}"
     do
         cd $OUT_DIR
-        mkdir $OUT_DIR/$name
+        mkdir $name
         for w in "${workload[@]}"
         do
             cd $OUT_DIR/$name
