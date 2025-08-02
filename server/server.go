@@ -9,7 +9,7 @@ import (
 	"math/rand/v2"
 	"time"
 
-	"github.com/alanwang67/session_library/protocol"
+	"github.com/KiJeong-Lim/session_library/protocol"
 )
 
 type Operation struct {

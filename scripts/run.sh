@@ -1,12 +1,16 @@
 #!/bin/bash
 
+CALL_DIR="$PWD"
+LIB_DIR="${CALL_DIR}"
+OUT_DIR="${CALL_DIR}/output"
+
 create_session() {
     tmux new-session -d -s ${1} -c ${2}
 }
 
 # Attach to tmux session
 attach_session() {
-    tmux attach-session -t $1
+    tmux attach-session -t $LIB_DIR
 }
 
 # Create new tmux window, set starting directory
@@ -40,25 +44,23 @@ run_command_right() {
     tmux send-keys -t ${1}:${2}.1 "${3}" C-m
 }
 
-CALL_DIR="$PWD"
-
 if [[ $* == *-help* ]]; then 
-    echo 'Provide: {path of session semantics folder} {path of output files}'
+    echo ''
 else 
     ct=0
     tmux kill-session -t experiment 
 
-    cd $1
+    cd $LIB_DIR
     go build main.go
 
-    if [ ! -e "$2" ]; then
-        mkdir $2
+    if [ ! -e "$OUT_DIR" ]; then
+        mkdir $OUT_DIR
     fi
 
-    cd $2
+    cd $OUT_DIR
 
     SES="experiment"               
-    DIR=$1
+    DIR=$LIB_DIR
 
     create_session $SES $DIR       
     new_window $SES 1 $DIR
@@ -79,9 +81,9 @@ else
     name_window $SES 2 server2
     run_command $SES 2 "ssh srg04"
 
-    run_command $SES 0 "cd $1"
-    run_command $SES 1 "cd $1"
-    run_command $SES 2 "cd $1"
+    run_command $SES 0 "cd $LIB_DIR"
+    run_command $SES 1 "cd $LIB_DIR"
+    run_command $SES 2 "cd $LIB_DIR"
 
     sleep 1
 
@@ -89,19 +91,19 @@ else
     declare -a workload=(50 5) 
     for name in "${arr[@]}"
     do
-        cd $2
+        cd $OUT_DIR
         mkdir $name
         for w in "${workload[@]}"
         do
-            cd $2/$name/
+            cd $OUT_DIR/$name/
             mkdir workload_$w
             for session in {0..5} 
             do  
-                cd $2/$name/workload_$w
+                cd $OUT_DIR/$name/workload_$w
                 mkdir $session    
                 for run in {1..3}
                 do
-                    cd $2/$name/workload_$w/$session 
+                    cd $OUT_DIR/$name/workload_$w/$session 
                     mkdir run_$run 
                     for i in {1..10}
                     do
@@ -114,11 +116,11 @@ else
                         sleep 10
 
                         if [ $w = 50 ]; then
-                            cd $1; ./main $ct client scripts/config_files/$name.json $(( 2 + (($i - 1) * 9) )) 10 $session $w > $2/$name/workload_$w/$session/run_$run/$i
+                            cd $LIB_DIR; ./main $ct client scripts/config_files/$name.json $(( 2 + (($i - 1) * 9) )) 10 $session $w > $OUT_DIR/$name/workload_$w/$session/run_$run/$i
                         fi 
 
                         if [ $w = 5 ]; then
-                            cd $1; ./main $ct client scripts/config_files/$name.json $(( 2 + (($i - 1) * 8) )) 10 $session $w > $2/$name/workload_$w/$session/run_$run/$i
+                            cd $LIB_DIR; ./main $ct client scripts/config_files/$name.json $(( 2 + (($i - 1) * 8) )) 10 $session $w > $OUT_DIR/$name/workload_$w/$session/run_$run/$i
                         fi
 
                         ct=$(($ct + 1))
