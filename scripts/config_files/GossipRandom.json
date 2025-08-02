@@ -1,7 +1,7 @@
 {
 	"SwitchServer": 1000,
-    "PrimaryBackUpRoundRobin": true,
+    "PrimaryBackUpRoundRobin": false,
     "PrimaryBackupRandom": false, 
-    "GossipRandom": false, 
+    "GossipRandom": true, 
     "PinnedRoundRobin": false
 }

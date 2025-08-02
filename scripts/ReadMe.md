@@ -1,17 +1,7 @@
-# Help
-
-```sh
-bash scripts/run.sh -help
-```
-
 # Run
 
-`Provide: {path of session semantics folder} {path of output files}`
-
-- example:
-
 ```
-bash scripts/run.sh ~/Desktop/Misc/session_library ~/Desktop/Misc/session_library/output
+bash scripts/run.sh
 ```
 
 To run the plot files you can run average.py to condense the values of the run_numbers 
