@@ -41,7 +41,7 @@ run_command_right() {
 }
 
 if [[ $* == *-help* ]]; then 
-    echo Provide: {path of session semantics folder} {path of output files} 
+    echo 'Provide: {path of session semantics folder} {path of output files}'
 else 
     ct=0
     tmux kill-session -t experiment 
@@ -108,11 +108,11 @@ else
                         sleep 10
 
                         if [ $w = 50 ]; then
-                            cd ~/session_semantics; ./main $ct client config_files/$name.json $(( 2 + (($i - 1) * 9) )) 10 $session $w > $2/$name/workload_$w/$session/run_$run/$i
+                            ./../main $ct client config_files/$name.json $(( 2 + (($i - 1) * 9) )) 10 $session $w > $2/$name/workload_$w/$session/run_$run/$i
                         fi 
 
                         if [ $w = 5 ]; then
-                            cd ~/session_semantics; ./main $ct client config_files/$name.json $(( 2 + (($i - 1) * 8) )) 10 $session $w > $2/$name/workload_$w/$session/run_$run/$i
+                            ./../main $ct client config_files/$name.json $(( 2 + (($i - 1) * 8) )) 10 $session $w > $2/$name/workload_$w/$session/run_$run/$i
                         fi 
 
                         ct=$(($ct + 1))
