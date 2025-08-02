@@ -90,15 +90,15 @@ else
 
     sleep 1
 
-    declare -a arr=("PrimaryBackUpRoundRobin") # "GossipRandom" "PinnedRoundRobin" "PrimaryBackUpRandom" 
+    declare -a arr=("PrimaryBackUpRoundRobin" "GossipRandom" "PinnedRoundRobin" "PrimaryBackUpRandom")
     declare -a workload=(50 5) 
     for name in "${arr[@]}"
     do
         cd $OUT_DIR
-        mkdir $name
+        mkdir $OUT_DIR/$name
         for w in "${workload[@]}"
         do
-            cd $OUT_DIR/$name/
+            cd $OUT_DIR/$name
             mkdir workload_$w
             for session in {0..5} 
             do  
