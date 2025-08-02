@@ -1,11 +1,17 @@
-# How to run the scripts
-The scripts will generate files of the following structure 
-{config}/{workload}/{session_semantic}/{trial_number}/{run_number}
+# Help
+
+```sh
+bash scripts/run.sh -help
+```
+
+# Run
+
+`Provide: {path of session semantics folder} {path of output files}`
 
 - example:
+
 ```
-mkdir output
-sudo zsh scripts/run.sh . /home/lim/Desktop/Misc/session_library/output 1 1 1
+bash scripts/run.sh ~/Desktop/Misc/session_library ~/Desktop/Misc/session_library/output
 ```
 
 To run the plot files you can run average.py to condense the values of the run_numbers 
