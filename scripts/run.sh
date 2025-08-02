@@ -55,6 +55,9 @@ else
 
     if [ ! -e "$OUT_DIR" ]; then
         mkdir $OUT_DIR
+    else
+        rm -rf $OUT_DIR
+        mkdir $OUT_DIR
     fi
 
     cd $OUT_DIR
@@ -115,11 +118,11 @@ else
 
                         sleep 10
 
-                        if [ $w = 50 ]; then
+                        if [ $w == 50 ]; then
                             cd $LIB_DIR; ./main $ct client scripts/config_files/$name.json $(( 2 + (($i - 1) * 9) )) 10 $session $w > $OUT_DIR/$name/workload_$w/$session/run_$run/$i
                         fi 
 
-                        if [ $w = 5 ]; then
+                        if [ $w == 5 ]; then
                             cd $LIB_DIR; ./main $ct client scripts/config_files/$name.json $(( 2 + (($i - 1) * 8) )) 10 $session $w > $OUT_DIR/$name/workload_$w/$session/run_$run/$i
                         fi
 
