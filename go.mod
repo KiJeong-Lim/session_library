@@ -1,4 +1,4 @@
-module github.com/alanwang67/session_library
+module github.com/KiJeong-Lim/session_library
 
 go 1.23.3
 
