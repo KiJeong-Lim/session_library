@@ -33,14 +33,13 @@ func main() {
 
 	servers := make([]*protocol.Connection, len(data["servers"].([]interface{})))
 	for i, s := range data["servers"].([]interface{}) {
-		conn, _ := s.(map[string]interface{})
-
-		network, _ := conn["network"].(string)
-		address, _ := conn["address"].(string)
-
-		servers[i] = &protocol.Connection{
+	conn := s.(map[string]interface{})
+	network := conn["network"].(string)
+	address := conn["address"].(string)
+	offset := portOffSet * uint64(i)
+	servers[i] = &protocol.Connection{
 			Network: network,
-			Address: processAddressString(address, portOffSet),
+			Address: processAddressString(address, offset),
 		}
 	}
 
