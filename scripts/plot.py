@@ -217,4 +217,3 @@ else:
 
     file_name = get_write_percentage(file1)
     plt.savefig(directory + "/" + str(file_name) + get_PB_Gossip(file1) + "write" + '.pdf', format='pdf', dpi=1200)
-
