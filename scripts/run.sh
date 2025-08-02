@@ -40,6 +40,8 @@ run_command_right() {
     tmux send-keys -t ${1}:${2}.1 "${3}" C-m
 }
 
+CALL_DIR="$PWD"
+
 if [[ $* == *-help* ]]; then 
     echo 'Provide: {path of session semantics folder} {path of output files}'
 else 
@@ -108,12 +110,12 @@ else
                         sleep 10
 
                         if [ $w = 50 ]; then
-                            ./main $ct client config_files/$name.json $(( 2 + (($i - 1) * 9) )) 10 $session $w > $2/$name/workload_$w/$session/run_$run/$i
-                        fi 
+                            cd "$CALL_DIR"; ./main $ct client config_files/$name.json $(( 2 + (($i - 1) * 9) )) 10 $session $w > $2/$name/workload_$w/$session/run_$run/$i
+                        fi
 
                         if [ $w = 5 ]; then
-                            ./main $ct client config_files/$name.json $(( 2 + (($i - 1) * 8) )) 10 $session $w > $2/$name/workload_$w/$session/run_$run/$i
-                        fi 
+                            cd "$CALL_DIR"; ./main $ct client config_files/$name.json $(( 2 + (($i - 1) * 8) )) 10 $session $w > $2/$name/workload_$w/$session/run_$run/$i
+                        fi
 
                         ct=$(($ct + 1))
 
