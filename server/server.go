@@ -9,7 +9,7 @@ import (
 	"math/rand/v2"
 	"time"
 
-	"github.com/alanwang67/session_library/protocol"
+	"github.com/KiJeong-Lim/session_library/protocol"
 )
 
 type Operation struct {
@@ -135,7 +135,7 @@ func maxTS(t1 []uint64, t2 []uint64) []uint64 {
 	var output = make([]uint64, len(t1))
 	for i < length {
 		output[i] = maxTwoInts(t1[i], t2[i])
-		i += 1
+		i++
 	}
 	return output
 }
@@ -149,13 +149,13 @@ func oneOffVersionVector(v1 []uint64, v2 []uint64) bool {
 	for i < l {
 		if canApply && v1[i]+1 == v2[i] {
 			canApply = false
-			i = i + 1
+			i++
 			continue
 		}
 		if v1[i] < v2[i] {
 			output = false
 		}
-		i = i + 1
+		i++
 	}
 
 	return output && !canApply
@@ -177,15 +177,11 @@ func equalSlices(s1 []uint64, s2 []uint64) bool {
 	return output
 }
 
-func equalOperations(o1 Operation, o2 Operation) bool {
-	return equalSlices(o1.VersionVector, o2.VersionVector) && (o1.Data == o2.Data)
-}
-
 func binarySearch(s []Operation, needle Operation) uint64 {
 	var i = uint64(0)
 	var j = uint64(len(s))
 	for i < j {
-		mid := i + (j-i)/2
+		mid := i + (j - i)/2
 		if lexicographicCompare(needle.VersionVector, s[mid].VersionVector) {
 			i = mid + 1
 		} else {
@@ -200,25 +196,13 @@ func sortedInsert(s []Operation, value Operation) []Operation {
 	index := binarySearch(s, value)
 	if uint64(len(s)) == index {
 		return append(s, value)
-	} else if equalOperations(s[index], value) {
+	} else if equalSlices(s[index].VersionVector, value.VersionVector) {
 		return s
 	} else {
 		right := append([]Operation{value}, s[index:]...)
 		result := append(s[:index], right...)
 		return result
 	}
-}
-
-func deleteAtIndexOperation(l []Operation, index uint64) []Operation {
-	var ret = make([]Operation, 0)
-	ret = append(ret, l[:index]...)
-	return append(ret, l[index+1:]...)
-}
-
-func deleteAtIndexMessage(l []Message, index uint64) []Message {
-	var ret = make([]Message, 0)
-	ret = append(ret, l[:index]...)
-	return append(ret, l[index+1:]...)
 }
 
 func getDataFromOperationLog(l []Operation) uint64 {
@@ -233,45 +217,42 @@ func receiveGossip(server Server, request Message) Server {
 		return server
 	}
 
+	var s = server
 	var i = uint64(0)
 
 	for i < uint64(len(request.S2S_Gossip_Operations)) {
-		if oneOffVersionVector(server.VectorClock, request.S2S_Gossip_Operations[i].VersionVector) {
-			server.OperationsPerformed = sortedInsert(server.OperationsPerformed, request.S2S_Gossip_Operations[i])
-			server.VectorClock = maxTS(server.VectorClock, request.S2S_Gossip_Operations[i].VersionVector)
-		} else if compareVersionVector(server.VectorClock, request.S2S_Gossip_Operations[i].VersionVector) {
-		} else {
-			server.PendingOperations = sortedInsert(server.PendingOperations, request.S2S_Gossip_Operations[i])
+		if oneOffVersionVector(s.VectorClock, request.S2S_Gossip_Operations[i].VersionVector) {
+			s.OperationsPerformed = sortedInsert(s.OperationsPerformed, request.S2S_Gossip_Operations[i])
+			s.VectorClock = maxTS(s.VectorClock, request.S2S_Gossip_Operations[i].VersionVector)
+		} else if !compareVersionVector(s.VectorClock, request.S2S_Gossip_Operations[i].VersionVector) {
+			s.PendingOperations = sortedInsert(s.PendingOperations, request.S2S_Gossip_Operations[i])
 		}
-		i = i + 1
+		i++
+	}
+
+	n := uint64(len(s.PendingOperations))
+	i = uint64(0)
+	var markeds = make(bool, n)
+	for i < n {
+		if oneOffVersionVector(s.VectorClock, s.PendingOperations[i].VersionVector) {
+			s.OperationsPerformed = sortedInsert(s.OperationsPerformed, s.PendingOperations[i])
+			s.VectorClock = maxTS(s.VectorClock, s.PendingOperations[i].VersionVector)
+			markeds[i] = true
+		}
+		i++
 	}
 
 	i = uint64(0)
-	var seen = make([]uint64, 0)
-	for i < uint64(len(server.PendingOperations)) {
-		if oneOffVersionVector(server.VectorClock, server.PendingOperations[i].VersionVector) {
-			server.OperationsPerformed = sortedInsert(server.OperationsPerformed, server.PendingOperations[i])
-			server.VectorClock = maxTS(server.VectorClock, server.PendingOperations[i].VersionVector)
-			seen = append(seen, i)
-		}
-		i = i + 1
-	}
-
-	i = uint64(0)
-	var j = uint64(0)
 	var output = make([]Operation, 0)
-	for i < uint64(len(server.PendingOperations)) {
-		if j < uint64(len(seen)) && i == seen[j] {
-			j = j + 1
-		} else {
-			output = append(output, server.PendingOperations[i])
+	for i < n {
+		if !markeds[i] {
+			output = append(output, s.PendingOperations[i])
 		}
-		i = i + 1
+		i++
 	}
 
-	server.PendingOperations = output
-
-	return server
+	s.PendingOperations = output
+	return s
 }
 
 func acknowledgeGossip(server Server, request Message) Server {
@@ -297,7 +278,7 @@ func processClientRequest(server Server, request Message) (bool, Server, Message
 	if !compareVersionVector(server.VectorClock, request.C2S_Client_VersionVector) {
 		return false, server, reply
 	}
-
+	
 	if request.C2S_Client_OperationType == 0 {
 		reply.MessageType = 4
 		reply.S2C_Client_OperationType = 0
@@ -308,8 +289,17 @@ func processClientRequest(server Server, request Message) (bool, Server, Message
 
 		return true, server, reply
 	} else {
-		var s = server
-		s.VectorClock[server.Id] += 1
+	    var s = server
+
+		var guard = uint64(18446744073709551613) // 2^64 - 3
+		if !(uint64(s.VectorClock[s.Id]) <= guard) {
+			return false, s, reply
+		}
+		if !(uint64(len(s.MyOperations)) <= guard) {
+			return false, s, reply
+		}
+
+		s.VectorClock[s.Id] += 1
 
 		s.OperationsPerformed = sortedInsert(s.OperationsPerformed, Operation{
 			VersionVector: append(make([]uint64, 0), s.VectorClock...),
@@ -338,7 +328,6 @@ func processRequest(server Server, request Message) (Server, []Message) {
 	if request.MessageType == 0 {
 		var succeeded = false
 		var reply = Message{}
-
 		succeeded, s, reply = processClientRequest(s, request)
 		if succeeded {
 			outGoingRequests = append(outGoingRequests, reply)
@@ -351,16 +340,27 @@ func processRequest(server Server, request Message) (Server, []Message) {
 		var i = uint64(0)
 		var reply = Message{}
 		var succeeded = false
+		var markeds = make(bool, len(s.UnsatisfiedRequests))
 
 		for i < uint64(len(s.UnsatisfiedRequests)) {
 			succeeded, s, reply = processClientRequest(s, s.UnsatisfiedRequests[i])
 			if succeeded {
 				outGoingRequests = append(outGoingRequests, reply)
-				s.UnsatisfiedRequests = deleteAtIndexMessage(s.UnsatisfiedRequests, i)
-				continue
+				markeds[i] = true
 			}
 			i++
 		}
+
+		var nextUnsatisfiedRequests = make(Message{}, 0)
+
+		i = uint64(0)
+		for i < uint64(len(s.UnsatisfiedRequests)) {
+			if !markeds[i] {
+				nextUnsatisfiedRequests = append(nextUnsatisfiedRequests, s.UnsatisfiedRequests[i])
+			}
+			i++
+		}
+		s.UnsatisfiedRequests = nextUnsatisfiedRequests
 
 	} else if request.MessageType == 2 {
 		s = acknowledgeGossip(s, request)
@@ -371,8 +371,8 @@ func processRequest(server Server, request Message) (Server, []Message) {
 				index := uint64(i)
 				operations := getGossipOperations(s, index)
 				if uint64(len(operations)) != uint64(0) {
-					server.GossipAcknowledgements[index] = uint64(len(s.MyOperations))
-
+					s.GossipAcknowledgements[index] = uint64(len(s.MyOperations))
+					
 					outGoingRequests = append(outGoingRequests,
 						Message{MessageType: 1,
 							S2S_Gossip_Sending_ServerId:   s.Id,
@@ -382,7 +382,7 @@ func processRequest(server Server, request Message) (Server, []Message) {
 						})
 				}
 			}
-			i = i + 1
+			i++
 		}
 	}
 
