@@ -232,7 +232,7 @@ func receiveGossip(server Server, request Message) Server {
 
 	n := uint64(len(s.PendingOperations))
 	i = uint64(0)
-	var markeds = make(bool, n)
+	var markeds = make([]bool, n)
 	for i < n {
 		if oneOffVersionVector(s.VectorClock, s.PendingOperations[i].VersionVector) {
 			s.OperationsPerformed = sortedInsert(s.OperationsPerformed, s.PendingOperations[i])
@@ -340,7 +340,7 @@ func processRequest(server Server, request Message) (Server, []Message) {
 		var i = uint64(0)
 		var reply = Message{}
 		var succeeded = false
-		var markeds = make(bool, len(s.UnsatisfiedRequests))
+		var markeds = make([]bool, len(s.UnsatisfiedRequests))
 
 		for i < uint64(len(s.UnsatisfiedRequests)) {
 			succeeded, s, reply = processClientRequest(s, s.UnsatisfiedRequests[i])
@@ -351,7 +351,7 @@ func processRequest(server Server, request Message) (Server, []Message) {
 			i++
 		}
 
-		var nextUnsatisfiedRequests = make(Message{}, 0)
+		var nextUnsatisfiedRequests = make([]Message, 0)
 
 		i = uint64(0)
 		for i < uint64(len(s.UnsatisfiedRequests)) {
