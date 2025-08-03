@@ -98,109 +98,114 @@ func Start(config ConfigurationInfo, servers []*protocol.Connection) error {
 	for i < uint64(len(NClients)) {
 		j := i
 		go func(c *NClient) error {
-			index := uint64(0)
-			serverId := uint64(0)
-			readServerId := c.Id % 3
-			writeServerId := uint64(0)
-			var start_time time.Time
-			var end_time time.Time
-			var operation_start uint64
-			var operation_end uint64
-			var operation uint64
-			var temp time.Duration
+			if (c == nil)
+				return nil
+			else {
+				index := uint64(0)
+				serverId := uint64(0)
+				readServerId := c.Id % 3
+				writeServerId := uint64(0)
+				var start_time time.Time
+				var end_time time.Time
+				var operation_start uint64
+				var operation_end uint64
+				var operation uint64
+				var temp time.Duration
 
-			rng := rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64()))
-			z, err := ycsb.NewZipfGenerator(rng, uint64(0), uint64(100), float64(0.99), false)
-			if err != nil {
-				fmt.Println(err)
-			}
-			barrier.Done()
-			barrier.Wait()
-			defer wg.Done()
-
-			log_time := false
-			initial_time := time.Now()
-			latency := time.Duration(0)
-
-			for {
-				if uint64(rand.IntN(99)) < config.Workload {
-					operation = uint64(1)
-				} else {
-					operation = uint64(0)
+				rng := rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64()))
+				z, err := ycsb.NewZipfGenerator(rng, uint64(0), uint64(100), float64(0.99), false)
+				if err != nil {
+					fmt.Println(err)
 				}
+				barrier.Done()
+				barrier.Wait()
+				defer wg.Done()
 
-				if config.PrimaryBackUpRoundRobin {
-					readServerId = c.Id % 3
-					writeServerId = uint64(0)
-				} else if config.PrimaryBackupRandom {
-					if index%config.SwitchServer == 0 {
-						readServerId = uint64(rand.IntN(3))
+				log_time := false
+				initial_time := time.Now()
+				latency := time.Duration(0)
+
+				for {
+					if uint64(rand.IntN(99)) < config.Workload {
+						operation = uint64(1)
+					} else {
+						operation = uint64(0)
 					}
-					writeServerId = uint64(0)
-				} else if config.GossipRandom && (index%config.SwitchServer == 0) {
-					v := uint64(rand.IntN(3))
-					writeServerId = v
-					readServerId = v
-				} else if config.PinnedRoundRobin {
-					readServerId = c.Id % 3
-					writeServerId = c.Id % 3
+
+					if config.PrimaryBackUpRoundRobin {
+						readServerId = c.Id % 3
+						writeServerId = uint64(0)
+					} else if config.PrimaryBackupRandom {
+						if index%config.SwitchServer == 0 {
+							readServerId = uint64(rand.IntN(3))
+						}
+						writeServerId = uint64(0)
+					} else if config.GossipRandom && (index%config.SwitchServer == 0) {
+						v := uint64(rand.IntN(3))
+						writeServerId = v
+						readServerId = v
+					} else if config.PinnedRoundRobin {
+						readServerId = c.Id % 3
+						writeServerId = c.Id % 3
+					}
+
+					if !log_time && time.Since(initial_time) > lower_bound {
+						start_time = time.Now()
+						operation_start = index
+						log_time = true
+					}
+					if log_time && time.Since(start_time) > (upper_bound) {
+						end_time = time.Now()
+						operation_end = index
+						break
+					}
+
+					value := z.Uint64()
+
+					outGoingMessage := handler(c, operation, serverId, value, server.Message{})
+
+					var m server.Message
+
+					sent_time := time.Now()
+
+					if operation == uint64(0) {
+						serverId = readServerId
+					} else {
+						serverId = writeServerId
+					}
+
+					err := c.ServerEncoder[serverId].Encode(&outGoingMessage)
+					if err != nil {
+						fmt.Print(err)
+						// return err
+					}
+
+					err = c.ServerDecoders[serverId].Decode(&m)
+					if err != nil {
+						fmt.Print(err)
+						// return err
+					}
+
+					temp = (time.Since(sent_time))
+					latency = latency + temp
+
+					handler(c, 2, 0, 0, m)
+					index++
 				}
 
-				if !log_time && time.Since(initial_time) > lower_bound {
-					start_time = time.Now()
-					operation_start = index
-					log_time = true
-				}
-				if log_time && time.Since(start_time) > (upper_bound) {
-					end_time = time.Now()
-					operation_end = index
-					break
-				}
-
-				value := z.Uint64()
-
-				outGoingMessage := handler(c, operation, serverId, value, server.Message{})
-
-				var m server.Message
-
-				sent_time := time.Now()
-
-				if operation == uint64(0) {
-					serverId = readServerId
+				l.Lock()
+				if !set {
+					avg_time = (end_time.Sub(start_time).Seconds())
+					set = true
 				} else {
-					serverId = writeServerId
+					avg_time = (avg_time + (end_time.Sub(start_time).Seconds())) / 2
 				}
+				ops += operation_end - operation_start
+				total_latency = total_latency + latency
+				l.Unlock()
+				return nil
 
-				err := c.ServerEncoder[serverId].Encode(&outGoingMessage)
-				if err != nil {
-					fmt.Print(err)
-					// return err
-				}
-
-				err = c.ServerDecoders[serverId].Decode(&m)
-				if err != nil {
-					fmt.Print(err)
-					// return err
-				}
-
-				temp = (time.Since(sent_time))
-				latency = latency + temp
-
-				handler(c, 2, 0, 0, m)
-				index++
 			}
-
-			l.Lock()
-			if !set {
-				avg_time = (end_time.Sub(start_time).Seconds())
-				set = true
-			} else {
-				avg_time = (avg_time + (end_time.Sub(start_time).Seconds())) / 2
-			}
-			ops += operation_end - operation_start
-			total_latency = total_latency + latency
-			l.Unlock()
-			return nil
 		}(NClients[j])
 
 		i += 1

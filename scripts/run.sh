@@ -44,7 +44,7 @@ run_command_right() {
     tmux send-keys -t "$1:$2.1" "$3" C-m
 }
 
-if [[ $* == *-help* ]]; then 
+if [[ $* == *-pwd* ]]; then 
     echo $PWD
 else 
     ct=0
@@ -65,24 +65,24 @@ else
     SES="experiment"               
     DIR="$LIB_DIR"
 
-    create_session "$SES" "$DIR"       
-    new_window "$SES" 1 "$DIR"
-    new_window "$SES" 2 "$DIR"
+    create_session $SES $DIR       
+    new_window $SES 1 $DIR
+    new_window $SES 2 $DIR
 
     sleep 1
 
-    name_window "$SES" 0 server0 
-    run_command "$SES" 0 "ssh srg02"
+    name_window $SES 0 server0 
+    run_command $SES 0 "ssh srg02"
 
-    name_window "$SES" 1 server1
-    run_command "$SES" 1 "ssh srg03"
+    name_window $SES 1 server1
+    run_command $SES 1 "ssh srg03"
 
-    name_window "$SES" 2 server2
-    run_command "$SES" 2 "ssh srg04"
+    name_window $SES 2 server2
+    run_command $SES 2 "ssh srg04"
 
-    run_command "$SES" 0 "cd $LIB_DIR"
-    run_command "$SES" 1 "cd $LIB_DIR"
-    run_command "$SES" 2 "cd $LIB_DIR"
+    run_command $SES 0 "cd $LIB_DIR"
+    run_command $SES 1 "cd $LIB_DIR"
+    run_command $SES 2 "cd $LIB_DIR"
 
     sleep 1
 
