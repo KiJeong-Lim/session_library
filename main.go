@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/KiJeong-Lim/session_library/client"
-	"github.com/KiJeong-Lim/session_library/protocol"
-	"github.com/KiJeong-Lim/session_library/server"
+	"github.com/alanwang67/session_library/client"
+	"github.com/alanwang67/session_library/protocol"
+	"github.com/alanwang67/session_library/server"
 )
 
 func processAddressString(address string, n uint64) string {
@@ -33,13 +33,14 @@ func main() {
 
 	servers := make([]*protocol.Connection, len(data["servers"].([]interface{})))
 	for i, s := range data["servers"].([]interface{}) {
-	conn := s.(map[string]interface{})
-	network := conn["network"].(string)
-	address := conn["address"].(string)
-	offset := portOffSet * uint64(i)
-	servers[i] = &protocol.Connection{
+		conn, _ := s.(map[string]interface{})
+
+		network, _ := conn["network"].(string)
+		address, _ := conn["address"].(string)
+
+		servers[i] = &protocol.Connection{
 			Network: network,
-			Address: processAddressString(address, offset),
+			Address: processAddressString(address, portOffSet),
 		}
 	}
 

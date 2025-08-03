@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KiJeong-Lim/session_library/protocol"
-	"github.com/KiJeong-Lim/session_library/server"
-	"github.com/KiJeong-Lim/session_library/ycsb"
+	"github.com/alanwang67/session_library/protocol"
+	"github.com/alanwang67/session_library/server"
+	"github.com/alanwang67/session_library/ycsb"
 )
 
 type ConfigurationInfo struct {
