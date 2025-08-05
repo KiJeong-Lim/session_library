@@ -72,13 +72,13 @@ else
     sleep 1
 
     name_window $SES 0 server0 
-    run_command $SES 0 "ssh srg02"
+    # run_command $SES 0 "ssh srg02"
 
     name_window $SES 1 server1
-    run_command $SES 1 "ssh srg03"
+    # run_command $SES 1 "ssh srg03"
 
     name_window $SES 2 server2
-    run_command $SES 2 "ssh srg04"
+    # run_command $SES 2 "ssh srg04"
 
     run_command $SES 0 "cd $LIB_DIR"
     run_command $SES 1 "cd $LIB_DIR"
